@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">App Icon Change Demo</string>
+    <string name="current_alias">Current alias:\n%s</string>
+    <string name="button_activate">Activate</string>
+    <string name="button_reset">Reset</string>
+    <string name="radio_clone_initial">Clone Initial</string>
+    <string name="radio_red">Red</string>
+    <string name="radio_green">Green</string>
+    <string name="radio_blue">Blue</string>
+    <string name="message_alias_selected">%s selected</string>
+    <string name="message_alias_reset">Reset to InitialAlias</string>
+    <string name="error">ERROR</string>
+</resources>
