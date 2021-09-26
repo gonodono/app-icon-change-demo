@@ -58,15 +58,19 @@ without having to modify anything in code.
 To aid explanation, the manifest element for our Initial Alias looks as follows:
 
 ```xml
-
-<activity-alias android:name=".InitialAlias" android:exported="true"
-    android:icon="@drawable/ic_launcher_initial" android:targetActivity=".MainActivity">
+<activity-alias 
+    android:name=".InitialAlias"
+    android:exported="true"
+    android:icon="@drawable/ic_launcher_initial"
+    android:targetActivity=".MainActivity">
     <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
     </intent-filter>
 
-    <meta-data android:name="${applicationId}.ALIAS_TITLE" android:value="@string/initial_alias" />
+    <meta-data
+        android:name="${applicationId}.ALIAS_TITLE"
+        android:value="@string/initial_alias" />
 </activity-alias>
 ```
 
