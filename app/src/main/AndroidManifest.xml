@@ -26,6 +26,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="${applicationId}.ALIAS_TITLE"
+                android:value="@string/initial_alias" />
         </activity-alias>
 
         <activity-alias
@@ -38,6 +42,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="${applicationId}.ALIAS_TITLE"
+                android:value="@string/clone_initial_alias" />
         </activity-alias>
 
         <activity-alias
@@ -50,6 +58,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="${applicationId}.ALIAS_TITLE"
+                android:value="@string/red_alias" />
         </activity-alias>
 
         <activity-alias
@@ -62,6 +74,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="${applicationId}.ALIAS_TITLE"
+                android:value="@string/green_alias" />
         </activity-alias>
 
         <activity-alias
@@ -74,6 +90,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="${applicationId}.ALIAS_TITLE"
+                android:value="@string/blue_alias" />
         </activity-alias>
     </application>
 

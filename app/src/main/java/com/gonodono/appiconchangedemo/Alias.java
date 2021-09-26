@@ -1,36 +1,37 @@
 package com.gonodono.appiconchangedemo;
 
-import android.content.ComponentName;
+class Alias {
+    final String className;
+    final String title;
+    final int iconResId;
 
-enum Alias {
-    INITIAL_ALIAS("InitialAlias"),
-    CLONE_INITIAL_ALIAS("CloneInitialAlias"),
-    RED_ALIAS("RedAlias"),
-    GREEN_ALIAS("GreenAlias"),
-    BLUE_ALIAS("BlueAlias");
-
-    final String simpleName;
-    private ComponentName componentName;
-
-    Alias(String simpleName) {
-        this.simpleName = simpleName;
+    Alias(String className, String title, int iconResId) {
+        this.className = className;
+        this.title = title;
+        this.iconResId = iconResId;
     }
 
-    ComponentName getComponentName() {
-        if (componentName == null) {
-            componentName = new ComponentName(BuildConfig.APPLICATION_ID,
-                    BuildConfig.APPLICATION_ID + "." + simpleName);
-        }
-        return componentName;
+    String getSimpleName() {
+        final int index = className.lastIndexOf('.');
+        return index != -1 ? className.substring(index + 1) : className;
     }
 
-    static Alias forClassName(String className) {
-        final String simpleName = className.substring(className.lastIndexOf('.') + 1);
-        for (Alias alias : values()) {
-            if (simpleName.equals(alias.simpleName)) {
-                return alias;
-            }
-        }
-        return null;
+    @Override
+    @SuppressWarnings("NullableProblems")
+    public String toString() {
+        return title;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        return className.equals(((Alias) o).className);
+    }
+
+    @Override
+    public int hashCode() {
+        return className.hashCode();
     }
 }

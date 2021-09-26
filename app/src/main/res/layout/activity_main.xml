@@ -6,60 +6,34 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
+    android:padding="12dp"
     tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/text_output"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
         android:textAlignment="center"
-        android:textSize="22sp" />
+        android:textAppearance="?android:textAppearanceLarge" />
 
-    <Button
+    <GridView
+        android:id="@+id/grid_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="16dp"
+        android:gravity="center_horizontal"
+        android:columnWidth="100dp"
+        android:numColumns="auto_fit"
+        android:horizontalSpacing="16dp"
+        android:verticalSpacing="16dp" />
+
+    <ToggleButton
         android:id="@+id/button_activate"
-        android:layout_width="wrap_content"
+        style="?android:buttonStyle"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/button_activate"
-        android:visibility="gone" />
-
-    <RadioGroup
-        android:id="@+id/group_icon_color"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone">
-
-        <Button
-            android:id="@+id/button_reset"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="@string/button_reset" />
-
-        <RadioButton
-            android:id="@+id/radio_clone_initial"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/radio_clone_initial" />
-
-        <RadioButton
-            android:id="@+id/radio_red"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/radio_red" />
-
-        <RadioButton
-            android:id="@+id/radio_green"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/radio_green" />
-
-        <RadioButton
-            android:id="@+id/radio_blue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/radio_blue" />
-
-    </RadioGroup>
+        android:textOff="@string/button_activate"
+        android:textOn="@string/button_deactivate" />
 
 </LinearLayout>

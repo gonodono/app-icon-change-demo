@@ -1,186 +1,103 @@
 package com.gonodono.appiconchangedemo;
 
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.GET_ACTIVITIES;
-import static android.content.pm.PackageManager.GET_DISABLED_COMPONENTS;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.RadioGroup;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 public class MainActivity extends Activity {
 
-    private static final String EXTRA_REFRESHING = BuildConfig.APPLICATION_ID + ".EXTRA_REFRESHING";
-
-    private Alias currentAlias;
-    private boolean isRefreshing;
+    private IconChangeManager iconChangeManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        iconChangeManager = new IconChangeManager(this);
+
         final TextView output = findViewById(R.id.text_output);
-        final Button activateButton = findViewById(R.id.button_activate);
-        final Button resetButton = findViewById(R.id.button_reset);
-        final RadioGroup groupIconColor = findViewById(R.id.group_icon_color);
+        final ToggleButton activateButton = findViewById(R.id.button_activate);
 
-        currentAlias = getCurrentAlias();
+        output.setText(getString(R.string.current_alias,
+                iconChangeManager.getCurrentAlias().getSimpleName()));
 
-        if (currentAlias == null) {
-            output.setText(R.string.error);
-        } else {
-            output.setText(getString(R.string.current_alias, currentAlias.simpleName));
+        activateButton.setChecked(iconChangeManager.isIconChangeActivated());
+        activateButton.setOnCheckedChangeListener((v, checked) -> switchActivation(checked));
 
-            if (isIconChangeActivated()) {
-                resetButton.setOnClickListener(v -> resetIconChange());
-                groupIconColor.check(getRadioIdForAlias(currentAlias));
-                groupIconColor.setOnCheckedChangeListener((rg, id) -> onAliasSelected(id));
-                groupIconColor.setVisibility(View.VISIBLE);
-            } else {
-                activateButton.setOnClickListener(v -> activateIconChange());
-                activateButton.setVisibility(View.VISIBLE);
-            }
+        if (iconChangeManager.isIconChangeActivated()) {
+            final GridView gridView = findViewById(R.id.grid_view);
+            gridView.setAdapter(new AliasAdapter(this, iconChangeManager));
+            gridView.setOnItemClickListener((av, v, p, id) -> onAliasSelected(p));
+        }
 
-            if (savedInstanceState != null && savedInstanceState.getBoolean(EXTRA_REFRESHING)) {
-                showRefreshMessage();
-            }
+        if (iconChangeManager.isIconChangeRefresh(savedInstanceState)) {
+            showIconChangeMessage();
         }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(EXTRA_REFRESHING, isRefreshing);
+        iconChangeManager.onSaveInstanceState(outState);
     }
 
-    private void showRefreshMessage() {
-        final String message = isIconChangeActivated() ?
-                getString(R.string.message_alias_selected, currentAlias.simpleName) :
+    private void switchActivation(boolean enable) {
+        findViewById(android.R.id.content).setVisibility(View.GONE);
+        if (enable) {
+            iconChangeManager.activateIconChange();
+        } else {
+            if (!iconChangeManager.deactivateIconChange()) {
+                Toast.makeText(this, R.string.deactivate_error, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void onAliasSelected(int position) {
+        iconChangeManager.setCurrentAlias(iconChangeManager.getAliases().get(position));
+    }
+
+    private void showIconChangeMessage() {
+        final String message = iconChangeManager.isIconChangeActivated() ?
+                getString(R.string.message_alias_selected,
+                        iconChangeManager.getCurrentAlias().getSimpleName()) :
                 getString(R.string.message_alias_reset);
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
-    private void activateIconChange() {
-        hideContent();
-        setAliasEnabled(Alias.CLONE_INITIAL_ALIAS, true);
-        setAliasEnabled(Alias.INITIAL_ALIAS, false);
-        finish();
-    }
+    private static final class AliasAdapter extends ArrayAdapter<Alias> {
+        private final Alias currentAlias;
+        private final int drawableDimen;
 
-    private void resetIconChange() {
-        hideContent();
-        try {
-            final PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(),
-                    GET_ACTIVITIES | GET_DISABLED_COMPONENTS);
-            for (ActivityInfo activityInfo : packageInfo.activities) {
-                getPackageManager().setComponentEnabledSetting(createComponentName(activityInfo),
-                        COMPONENT_ENABLED_STATE_DEFAULT, DONT_KILL_APP);
-            }
-            refresh();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error resetting", Toast.LENGTH_SHORT).show();
+        AliasAdapter(Context context, IconChangeManager manager) {
+            super(context, R.layout.item_alias, manager.getAliases());
+            this.currentAlias = manager.getCurrentAlias();
+            this.drawableDimen =
+                    context.getResources().getDimensionPixelSize(R.dimen.item_alias_image_size);
         }
-    }
 
-    private void onAliasSelected(int checkedId) {
-        setCurrentAlias(getAliasForRadioId(checkedId));
-    }
-
-    private void setCurrentAlias(Alias alias) {
-        setAliasEnabled(alias, true);
-        setAliasEnabled(currentAlias, false);
-        refresh();
-    }
-
-    private void refresh() {
-        isRefreshing = true;
-        recreate();
-    }
-
-    private void setAliasEnabled(Alias alias, boolean enabled) {
-        final boolean isInitialAlias = alias == Alias.INITIAL_ALIAS;
-        final int newState =
-                enabled ? COMPONENT_ENABLED_STATE_ENABLED :
-                        isInitialAlias ? COMPONENT_ENABLED_STATE_DISABLED :
-                                COMPONENT_ENABLED_STATE_DEFAULT;
-
-        getPackageManager().setComponentEnabledSetting(alias.getComponentName(),
-                newState, DONT_KILL_APP);
-    }
-
-    private Alias getCurrentAlias() {
-        try {
-            final PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(),
-                    GET_ACTIVITIES | GET_DISABLED_COMPONENTS);
-            for (ActivityInfo activityInfo : packageInfo.activities) {
-                if (!isTargetActivity(activityInfo) && isAliasComponentEnabled(activityInfo)) {
-                    return Alias.forClassName(activityInfo.name);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        @Override
+        @SuppressLint("UseCompatLoadingForDrawables")
+        public View getView(int position, View convertView, ViewGroup parent) {
+            final TextView view = (TextView) super.getView(position, convertView, parent);
+            final Drawable drawable = getContext().getDrawable(getItem(position).iconResId);
+            drawable.setBounds(0, 0, drawableDimen, drawableDimen);
+            view.setCompoundDrawables(null, drawable, null, null);
+            view.setAlpha(isEnabled(position) ? 1f : .3f);
+            return view;
         }
-        return null;
-    }
 
-    private boolean isTargetActivity(ActivityInfo activityInfo) {
-        return MainActivity.class.getName().equals(activityInfo.name);
-    }
-
-    private boolean isAliasComponentEnabled(ActivityInfo aliasInfo) {
-        final int state =
-                getPackageManager().getComponentEnabledSetting(createComponentName(aliasInfo));
-        if (state == COMPONENT_ENABLED_STATE_DEFAULT) {
-            return aliasInfo.enabled;
+        @Override
+        public boolean isEnabled(int position) {
+            return !getItem(position).equals(currentAlias);
         }
-        return state == COMPONENT_ENABLED_STATE_ENABLED;
-    }
-
-    private boolean isIconChangeActivated() {
-        return getPackageManager()
-                .getComponentEnabledSetting(Alias.INITIAL_ALIAS.getComponentName()) ==
-                COMPONENT_ENABLED_STATE_DISABLED;
-    }
-
-    private ComponentName createComponentName(ActivityInfo info) {
-        return new ComponentName(info.packageName, info.name);
-    }
-
-    private void hideContent() {
-        findViewById(android.R.id.content).setVisibility(View.GONE);
-    }
-
-    private int getRadioIdForAlias(Alias alias) {
-        if (alias == Alias.RED_ALIAS) {
-            return R.id.radio_red;
-        } else if (alias == Alias.GREEN_ALIAS) {
-            return R.id.radio_green;
-        } else if (alias == Alias.BLUE_ALIAS) {
-            return R.id.radio_blue;
-        }
-        return R.id.radio_clone_initial;
-    }
-
-    private Alias getAliasForRadioId(int radioId) {
-        if (radioId == R.id.radio_red) {
-            return Alias.RED_ALIAS;
-        } else if (radioId == R.id.radio_green) {
-            return Alias.GREEN_ALIAS;
-        } else if (radioId == R.id.radio_blue) {
-            return Alias.BLUE_ALIAS;
-        }
-        return Alias.CLONE_INITIAL_ALIAS;
     }
 }
