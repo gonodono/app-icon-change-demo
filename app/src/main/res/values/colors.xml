@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="initial">#ff555555</color>
-    <color name="red">#ffcc2244</color>
-    <color name="green">#ff22cc44</color>
-    <color name="blue">#ff2244cc</color>
-
-    <color name="stroke">#ff000000</color>
+    <color name="initial">#FF666666</color>
+    <color name="red">#FFFF4444</color>
+    <color name="green">#FF44FF44</color>
+    <color name="blue">#FF4444FF</color>
+    <color name="black">#FF000000</color>
 </resources>

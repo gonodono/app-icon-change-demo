@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">App Icon Change Demo</string>
-
-    <string name="current_alias">Current alias:\n%s</string>
-    <string name="button_activate">Activate</string>
-    <string name="button_deactivate">Deactivate</string>
-    <string name="message_alias_selected">%s selected</string>
-    <string name="message_alias_reset">Deactivated\nInitialAlias selected</string>
-    <string name="deactivate_error">Error deactivating</string>
-
-    <string name="initial_alias">Initial</string>
-    <string name="clone_initial_alias">Original Icon</string>
+    <string name="initial_alias">Original</string>
+    <string name="clone_initial_alias">Original</string>
     <string name="red_alias">Really Red</string>
     <string name="green_alias">Greatly Green</string>
     <string name="blue_alias">Bigly Blue</string>
