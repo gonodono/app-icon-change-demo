@@ -19,6 +19,7 @@ internal class IconChangeManager(private val activity: Activity) {
 
     private val packageManager: PackageManager = activity.packageManager
     private val aliasesInit: MutableList<ActivityAlias> = mutableListOf()
+
     private val currentInit: ActivityAlias
     private val initialAlias: ActivityAlias
     private val cloneInitialAlias: ActivityAlias
@@ -54,6 +55,7 @@ internal class IconChangeManager(private val activity: Activity) {
 
         for (alias in aliasesInit) {
             if (alias == initial || alias.icon != initial.icon) continue
+
             check(cloneInitial == null) {
                 "Multiple clone initial aliases found"
             }
@@ -100,6 +102,7 @@ internal class IconChangeManager(private val activity: Activity) {
             } else {
                 for (activityInfo in activity.getPackageInfo().activities!!) {
                     if (!activityInfo.isIconChangeAlias()) continue
+
                     packageManager.setComponentEnabledSetting(
                         activityInfo.name.toComponentName(),
                         COMPONENT_ENABLED_STATE_DEFAULT,
@@ -120,10 +123,10 @@ internal class IconChangeManager(private val activity: Activity) {
         savedInstanceState: Bundle?
     ): StartMode = when {
         // Order matters.
-        savedInstanceState?.containsKey(EXTRA_IS_CHANGING_ICON) == true -> {
+        savedInstanceState?.getBoolean(EXTRA_IS_CHANGING_ICON) ?: false -> {
             StartMode.IconChange
         }
-        intent.hasExtra(EXTRA_IS_CHANGING_ACTIVATION) -> {
+        intent.getBooleanExtra(EXTRA_IS_CHANGING_ACTIVATION, false) -> {
             StartMode.ActivationChange
         }
         else -> StartMode.Normal

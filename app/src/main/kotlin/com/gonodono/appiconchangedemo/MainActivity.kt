@@ -7,7 +7,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,7 +36,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
 
@@ -77,6 +75,7 @@ private fun Content(
     startMode: IconChangeManager.StartMode
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -86,6 +85,7 @@ private fun Content(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
+
         MainContent(
             aliases = aliases,
             currentAlias = currentAlias,
@@ -95,6 +95,7 @@ private fun Content(
             modifier = Modifier.padding(paddingValues)
         )
     }
+
     if (startMode != IconChangeManager.StartMode.Normal) {
         LaunchedEffect(Unit) {
             snackbarHostState.showSnackbar(
@@ -125,8 +126,10 @@ private fun MainContent(
             textAlign = TextAlign.Center,
             fontSize = 20.sp
         )
+
         if (isIconChangeActivated) {
             OutlinedButton({ setIsActivated(false) }) { Text("Deactivate") }
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -135,13 +138,13 @@ private fun MainContent(
                 items(aliases) { alias ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.run {
                             if (alias == currentAlias) alpha(0.3F)
                             else clickable { setCurrentAlias(alias) }
                         }
                     ) {
                         DrawableIcon(alias.icon)
-                        Spacer(Modifier.size(10.dp))
                         Text(alias.title)
                     }
                 }
@@ -154,11 +157,12 @@ private fun MainContent(
 
 @Composable
 private fun DrawableIcon(id: Int) {
-    val drawable = LocalContext.current.run { resources.getDrawable(id, theme) }
+    val drawable = with(LocalContext.current) {
+        remember(id) { resources.getDrawable(id, theme) }
+    }
     Canvas(Modifier.size(80.dp)) {
-        drawable.run {
-            setBounds(0, 0, size.width.roundToInt(), size.height.roundToInt())
-            draw(drawContext.canvas.nativeCanvas)
-        }
+        val side = 80.dp.roundToPx()
+        drawable.setBounds(0, 0, side, side)
+        drawable.draw(drawContext.canvas.nativeCanvas)
     }
 }

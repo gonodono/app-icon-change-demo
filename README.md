@@ -28,9 +28,9 @@ from then on without killing the app. The trick is two-part:
   default. This one is enabled during activation, to look like nothing's really
   changed yet. Named `CloneInitialAlias` in this example, for consistency.
 
-- **Activation** simply means explicitly disabling the Initial Alias,
-  enabling the Clone, and restarting. After this, switching icons involves only
-  the aliases that were disabled by default, thus allowing the "no-kill" swaps.
+- **Activation** simply means explicitly disabling the Initial Alias, enabling
+  the Clone, and restarting. After this, switching icons involves only the
+  aliases that were disabled by default, thus allowing the "no-kill" swaps.
 
 - **Deactivation** entails resetting all of our aliases back to their default
   enabled states and restarting. Apparently `recreate()` is sufficient, but the
@@ -71,7 +71,6 @@ as follows:
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
     </intent-filter>
-
     <meta-data
         android:name="${applicationId}.ALIAS_TITLE"
         android:value="@string/initial_alias" />
@@ -138,11 +137,13 @@ determining if the `Activity` is restarting due to an activation or icon change.
 - I don't necessarily recommend offering this feature in general. I originally
   investigated this just to see if I could figure out Todoist's technique, and
   that's all this project is: a simple demonstration of that particular
-  implementation. The `<activity-alias>` solution has always been a hacky
-  workaround for this missing functionality in Android, and the only bonus here
-  is possibly being able to effect a switch without restarting. It still has the
-  same caveats and glitchy behavior that the base approach has always had,
-  including, but not limited to:
+  implementation.
+
+  The `<activity-alias>` solution has always been a hacky workaround for this
+  missing functionality in Android, and the only bonus here is possibly being
+  able to effect a switch without restarting. It still has the same caveats and
+  glitchy behavior that the base approach has always had, including, but not
+  limited to:
 
   - The alias `name`s can't ever be changed after the first release, or it may
     break existing installations.
@@ -182,9 +183,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   [SO-post]: https://stackoverflow.com/q/68576022
 
-  [IconChangeManager]: https://github.com/gonodono/app-icon-change-demo/blob/main/app/src/main/kotlin/com/gonodono/appiconchangedemo/IconChangeManager.kt
+  [IconChangeManager]: app/src/main/kotlin/com/gonodono/appiconchangedemo/IconChangeManager.kt
 
-  [manifest]: https://github.com/gonodono/app-icon-change-demo/blob/main/app/src/main/AndroidManifest.xml#L18
+  [manifest]: app/src/main/AndroidManifest.xml#L18
 
   [metadata-docs]: https://developer.android.com/guide/topics/manifest/meta-data-element
 
