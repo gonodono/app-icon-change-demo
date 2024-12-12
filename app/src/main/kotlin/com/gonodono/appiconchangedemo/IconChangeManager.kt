@@ -18,63 +18,48 @@ import android.os.Bundle
 internal class IconChangeManager(private val activity: Activity) {
 
     private val packageManager: PackageManager = activity.packageManager
-    private val aliasesInit: MutableList<ActivityAlias> = mutableListOf()
 
     private val currentInit: ActivityAlias
     private val initialAlias: ActivityAlias
     private val cloneInitialAlias: ActivityAlias
 
+    var aliases: List<ActivityAlias>
+        private set
+
     init {
-        var current: ActivityAlias? = null
-        var initial: ActivityAlias? = null
-        var cloneInitial: ActivityAlias? = null
+        val myAliases = activity.getManifestInfo().activities!!
+            .filter { info -> info.isIconChangeAlias }
+            .map { info -> ActivityAlias(info) }
 
-        for (activityInfo in activity.getPackageInfo().activities!!) {
-            if (!activityInfo.isIconChangeAlias()) continue
-
-            val alias = ActivityAlias(activityInfo)
-
-            if (activityInfo.isComponentEnabled()) {
-                check(current == null) {
-                    "Multiple alias components currently enabled"
-                }
-                current = alias
-            }
-
-            if (activityInfo.enabled) {
-                check(initial == null) {
-                    "Multiple initial aliases enabled in manifest"
-                }
-                initial = alias
-            } else {
-                aliasesInit.add(alias)
-            }
+        val componentEnabled = myAliases.filter { it.isComponentEnabled }
+        currentInit = when (componentEnabled.size) {
+            1 -> componentEnabled[0]
+            0 -> error("No alias component currently enabled")
+            else -> error("Multiple alias components currently enabled")
         }
-        checkNotNull(current) { "No alias component currently enabled" }
-        checkNotNull(initial) { "No initial alias enabled in manifest" }
 
-        for (alias in aliasesInit) {
-            if (alias == initial || alias.icon != initial.icon) continue
-
-            check(cloneInitial == null) {
-                "Multiple clone initial aliases found"
-            }
-            cloneInitial = alias
+        val (enabled, disabled) = myAliases.partition { it.isEnabledInManifest }
+        initialAlias = when (enabled.size) {
+            1 -> enabled[0]
+            0 -> error("No initial alias enabled in manifest")
+            else -> error("Multiple aliases enabled in manifest")
         }
-        checkNotNull(cloneInitial) { "No clone initial alias found" }
 
-        currentInit = current
-        initialAlias = initial
-        cloneInitialAlias = cloneInitial
+        val sameIcon = disabled.filter { it.icon == initialAlias.icon }
+        cloneInitialAlias = when (sameIcon.size) {
+            1 -> sameIcon[0]
+            0 -> error("No clone initial alias found")
+            else -> error("Multiple clone initial aliases found")
+        }
+
+        aliases = disabled
     }
-
-    val aliases: List<ActivityAlias> = aliasesInit
 
     var currentAlias: ActivityAlias = currentInit
         set(alias) {
             if (field == alias) return
-            field.setComponentEnabled(false)
-            alias.setComponentEnabled(true)
+            field.isComponentEnabled = false
+            alias.isComponentEnabled = true
             field = alias
             isChangingIcon = true
             activity.recreate()
@@ -86,13 +71,13 @@ internal class IconChangeManager(private val activity: Activity) {
         outState.putBoolean(EXTRA_IS_CHANGING_ICON, isChangingIcon)
     }
 
-    var isIconChangeActivated: Boolean = initialAlias.isComponentDisabled()
+    var isIconChangeActivated: Boolean = !initialAlias.isComponentEnabled
         set(activated) {
             if (field == activated) return
             field = activated
             if (activated) {
-                initialAlias.setComponentEnabled(false)
-                cloneInitialAlias.setComponentEnabled(true)
+                initialAlias.isComponentEnabled = false
+                cloneInitialAlias.isComponentEnabled = true
 
                 // Originally, the demo just finished the Activity and required
                 // the user to relaunch. While updating, I found that a restart
@@ -100,8 +85,8 @@ internal class IconChangeManager(private val activity: Activity) {
                 // issues, you might need to change back to a manual relaunch.
                 activity.restart()
             } else {
-                for (activityInfo in activity.getPackageInfo().activities!!) {
-                    if (!activityInfo.isIconChangeAlias()) continue
+                for (activityInfo in activity.getManifestInfo().activities!!) {
+                    if (!activityInfo.isIconChangeAlias) continue
 
                     packageManager.setComponentEnabledSetting(
                         activityInfo.name.toComponentName(),
@@ -132,29 +117,28 @@ internal class IconChangeManager(private val activity: Activity) {
         else -> StartMode.Normal
     }
 
-    private fun ActivityInfo.isComponentEnabled(): Boolean {
-        val componentName = name.toComponentName()
-        val state = packageManager.getComponentEnabledSetting(componentName)
-        if (state == COMPONENT_ENABLED_STATE_DEFAULT) return enabled
-        return state == COMPONENT_ENABLED_STATE_ENABLED
-    }
-
-    private fun ActivityAlias.isComponentDisabled(): Boolean =
-        packageManager.getComponentEnabledSetting(name.toComponentName()) ==
-                COMPONENT_ENABLED_STATE_DISABLED
-
-    private fun ActivityAlias.setComponentEnabled(enabled: Boolean) {
-        val newState = when {
-            enabled -> COMPONENT_ENABLED_STATE_ENABLED
-            this == initialAlias -> COMPONENT_ENABLED_STATE_DISABLED
-            else -> COMPONENT_ENABLED_STATE_DEFAULT
+    private var ActivityAlias.isComponentEnabled: Boolean
+        get() {
+            val componentName = name.toComponentName()
+            val state = packageManager.getComponentEnabledSetting(componentName)
+            return if (state == COMPONENT_ENABLED_STATE_DEFAULT) {
+                isEnabledInManifest
+            } else {
+                state == COMPONENT_ENABLED_STATE_ENABLED
+            }
         }
-        packageManager.setComponentEnabledSetting(
-            name.toComponentName(),
-            newState,
-            DONT_KILL_APP
-        )
-    }
+        set(enabled) {
+            val newState = when {
+                enabled -> COMPONENT_ENABLED_STATE_ENABLED
+                this == initialAlias -> COMPONENT_ENABLED_STATE_DISABLED
+                else -> COMPONENT_ENABLED_STATE_DEFAULT
+            }
+            packageManager.setComponentEnabledSetting(
+                name.toComponentName(),
+                newState,
+                DONT_KILL_APP
+            )
+        }
 
     private fun String.toComponentName() = ComponentName(activity, this)
 }
@@ -165,7 +149,7 @@ private const val EXTRA_IS_CHANGING_ACTIVATION: String =
 private const val EXTRA_IS_CHANGING_ICON: String =
     BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ICON"
 
-private fun Activity.getPackageInfo(): PackageInfo =
+private fun Activity.getManifestInfo(): PackageInfo =
     packageManager.getPackageInfo(
         packageName,
         GET_ACTIVITIES or GET_META_DATA or MATCH_DISABLED_COMPONENTS
@@ -177,5 +161,5 @@ private fun Activity.restart() {
     startActivity(intent.putExtra(EXTRA_IS_CHANGING_ACTIVATION, true))
 }
 
-private fun ActivityInfo.isIconChangeAlias(): Boolean =
-    metaData?.containsKey(ActivityAlias.META_DATA_TITLE) == true
+private val ActivityInfo.isIconChangeAlias: Boolean
+    get() = metaData?.containsKey(ActivityAlias.META_DATA_TITLE) == true

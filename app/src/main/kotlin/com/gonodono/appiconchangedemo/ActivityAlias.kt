@@ -12,6 +12,8 @@ internal data class ActivityAlias(private val activityInfo: ActivityInfo) {
 
     val simpleName: String = name.substringAfterLast('.')
 
+    val isEnabledInManifest: Boolean = activityInfo.enabled
+
     companion object {
         const val META_DATA_TITLE = "${BuildConfig.APPLICATION_ID}.ALIAS_TITLE"
     }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,11 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -45,17 +51,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val manager = IconChangeManager(this).also { iconChangeManager = it }
+        val startMode = manager.determineStartMode(intent, savedInstanceState)
 
-        setContent {
-            Content(
-                manager.aliases,
-                manager.currentAlias,
-                manager::currentAlias::set,
-                manager.isIconChangeActivated,
-                manager::isIconChangeActivated::set,
-                manager.determineStartMode(intent, savedInstanceState),
-            )
-        }
+        setContent { Content(manager, startMode) }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -67,11 +65,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(
-    aliases: List<ActivityAlias>,
-    currentAlias: ActivityAlias,
-    setCurrentAlias: (ActivityAlias) -> Unit,
-    isIconChangeActivated: Boolean,
-    setIsActivated: (Boolean) -> Unit,
+    manager: IconChangeManager,
     startMode: IconChangeManager.StartMode
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -86,33 +80,22 @@ private fun Content(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
 
-        MainContent(
-            aliases = aliases,
-            currentAlias = currentAlias,
-            setCurrentAlias = setCurrentAlias,
-            isIconChangeActivated = isIconChangeActivated,
-            setIsActivated = setIsActivated,
-            modifier = Modifier.padding(paddingValues)
-        )
+        MainContent(manager, Modifier.padding(paddingValues))
     }
 
-    if (startMode != IconChangeManager.StartMode.Normal) {
-        LaunchedEffect(Unit) {
-            snackbarHostState.showSnackbar(
-                message = startMode.toString(),
-                duration = SnackbarDuration.Short
-            )
-        }
+    if (startMode == IconChangeManager.StartMode.Normal) return
+
+    LaunchedEffect(Unit) {
+        snackbarHostState.showSnackbar(
+            message = startMode.toString(),
+            duration = SnackbarDuration.Short
+        )
     }
 }
 
 @Composable
 private fun MainContent(
-    aliases: List<ActivityAlias>,
-    currentAlias: ActivityAlias,
-    setCurrentAlias: (ActivityAlias) -> Unit,
-    isIconChangeActivated: Boolean,
-    setIsActivated: (Boolean) -> Unit,
+    manager: IconChangeManager,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -121,36 +104,45 @@ private fun MainContent(
         modifier = modifier.fillMaxWidth()
     ) {
         HorizontalDivider()
-        Text(
-            text = "Current alias:\n${currentAlias.simpleName}",
-            textAlign = TextAlign.Center,
-            fontSize = 20.sp
-        )
 
-        if (isIconChangeActivated) {
-            OutlinedButton({ setIsActivated(false) }) { Text("Deactivate") }
+        val isActivated = manager.isIconChangeActivated
+        OutlinedButton({ manager.isIconChangeActivated = !isActivated }) {
+            Text(if (isActivated) "Deactivate" else "Activate")
+        }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                items(aliases) { alias ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.run {
-                            if (alias == currentAlias) alpha(0.3F)
-                            else clickable { setCurrentAlias(alias) }
-                        }
-                    ) {
-                        DrawableIcon(alias.icon)
-                        Text(alias.title)
+        val header = buildAnnotatedString {
+            appendLine("Current alias:")
+            val span = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            withStyle(span) { append(manager.currentAlias.simpleName) }
+        }
+        Text(text = header, textAlign = TextAlign.Center)
+
+        if (!manager.isIconChangeActivated) return
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(20.dp)
+        ) {
+            items(manager.aliases) { alias ->
+                val itemModifier = Modifier.run {
+                    if (alias != manager.currentAlias) {
+                        clickable { manager.currentAlias = alias }
+                            .scale(0.9F).alpha(0.7F)
+                    } else {
+                        scale(1.1F)
                     }
                 }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = itemModifier
+                ) {
+                    DrawableIcon(alias.icon)
+                    Text(alias.title)
+                }
             }
-        } else {
-            OutlinedButton({ setIsActivated(true) }) { Text("Activate") }
         }
     }
 }
