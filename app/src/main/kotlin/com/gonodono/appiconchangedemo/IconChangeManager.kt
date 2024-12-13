@@ -23,22 +23,22 @@ internal class IconChangeManager(private val activity: Activity) {
     private val initialAlias: ActivityAlias
     private val cloneInitialAlias: ActivityAlias
 
-    var aliases: List<ActivityAlias>
+    var selectableAliases: List<ActivityAlias>
         private set
 
     init {
-        val myAliases = activity.getManifestInfo().activities!!
+        val aliases = activity.getManifestInfo().activities!!
             .filter { info -> info.isIconChangeAlias }
             .map { info -> ActivityAlias(info) }
 
-        val componentEnabled = myAliases.filter { it.isComponentEnabled }
+        val componentEnabled = aliases.filter { it.isComponentEnabled }
         currentInit = when (componentEnabled.size) {
             1 -> componentEnabled[0]
             0 -> error("No alias component currently enabled")
             else -> error("Multiple alias components currently enabled")
         }
 
-        val (enabled, disabled) = myAliases.partition { it.isEnabledInManifest }
+        val (enabled, disabled) = aliases.partition { it.isEnabledInManifest }
         initialAlias = when (enabled.size) {
             1 -> enabled[0]
             0 -> error("No initial alias enabled in manifest")
@@ -52,7 +52,7 @@ internal class IconChangeManager(private val activity: Activity) {
             else -> error("Multiple clone initial aliases found")
         }
 
-        aliases = disabled
+        selectableAliases = disabled
     }
 
     var currentAlias: ActivityAlias = currentInit
@@ -85,11 +85,9 @@ internal class IconChangeManager(private val activity: Activity) {
                 // issues, you might need to change back to a manual relaunch.
                 activity.restart()
             } else {
-                for (activityInfo in activity.getManifestInfo().activities!!) {
-                    if (!activityInfo.isIconChangeAlias) continue
-
+                arrayOf(initialAlias, currentAlias).forEach { alias ->
                     packageManager.setComponentEnabledSetting(
-                        activityInfo.name.toComponentName(),
+                        alias.name.toComponentName(),
                         COMPONENT_ENABLED_STATE_DEFAULT,
                         DONT_KILL_APP
                     )
@@ -107,7 +105,7 @@ internal class IconChangeManager(private val activity: Activity) {
         intent: Intent,
         savedInstanceState: Bundle?
     ): StartMode = when {
-        // Order matters.
+        // Order matters, unless you'd prefer to reset the Intent extra below.
         savedInstanceState?.getBoolean(EXTRA_IS_CHANGING_ICON) ?: false -> {
             StartMode.IconChange
         }
@@ -149,11 +147,10 @@ private const val EXTRA_IS_CHANGING_ACTIVATION: String =
 private const val EXTRA_IS_CHANGING_ICON: String =
     BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ICON"
 
-private fun Activity.getManifestInfo(): PackageInfo =
-    packageManager.getPackageInfo(
-        packageName,
-        GET_ACTIVITIES or GET_META_DATA or MATCH_DISABLED_COMPONENTS
-    )
+private fun Activity.getManifestInfo(): PackageInfo {
+    val flags = GET_ACTIVITIES or GET_META_DATA or MATCH_DISABLED_COMPONENTS
+    return packageManager.getPackageInfo(packageName, flags)
+}
 
 private fun Activity.restart() {
     finish() // <- Must come first, else it cancels the startActivity().

@@ -74,7 +74,7 @@ private fun Content(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
-                colors = TopAppBarDefaults.topAppBarColors(Color(0xFFDDDDDD))
+                colors = TopAppBarDefaults.topAppBarColors(Color(0xFFEEEEEE))
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -121,18 +121,18 @@ private fun MainContent(
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(40.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(20.dp)
         ) {
-            items(manager.aliases) { alias ->
-                val itemModifier = Modifier.run {
-                    if (alias != manager.currentAlias) {
-                        clickable { manager.currentAlias = alias }
-                            .scale(0.9F).alpha(0.7F)
-                    } else {
-                        scale(1.1F)
-                    }
+            items(manager.selectableAliases) { alias ->
+                val itemModifier = if (manager.currentAlias != alias) {
+                    Modifier
+                        .clickable { manager.currentAlias = alias }
+                        .alpha(0.5F)
+                        .scale(0.9F)
+                } else {
+                    Modifier.scale(1.1F)
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
