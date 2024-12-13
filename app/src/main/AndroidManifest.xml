@@ -7,13 +7,13 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- The launchMode here is to help prevent multiple Activity instances, which would -->
+        <!-- cause multiple IconChangeManager instances, which would likely corrupt things and -->
+        <!-- crash. In production, you'll probably want to guarantee a single instance in some -->
+        <!-- other way; e.g., in a ViewModel, a custom Application, or with a classic singleton. -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:launchMode="singleTask" />
 
         <activity-alias
             android:name=".InitialAlias"
@@ -88,6 +88,7 @@
                 android:name="${applicationId}.ALIAS_TITLE"
                 android:value="@string/blue_alias" />
         </activity-alias>
+
     </application>
 
 </manifest>

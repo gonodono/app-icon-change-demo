@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -24,9 +23,9 @@ internal class IconChangeManager(private val activity: Activity) {
         private set
 
     init {
-        val aliases = activity.getManifestInfo().activities!!
-            .filter { info -> info.isIconChangeAlias }
-            .map { info -> ActivityAlias(info) }
+        val aliases = activity.getActivitiesFromManifest()
+            .filter { activityInfo -> activityInfo.isIconChangeAlias }
+            .map { activityInfo -> ActivityAlias(activityInfo) }
 
         val componentEnabled = aliases.filter { it.isComponentEnabled }
         currentInit = when (componentEnabled.size) {
@@ -112,8 +111,8 @@ internal class IconChangeManager(private val activity: Activity) {
     private var ActivityAlias.isComponentEnabled: Boolean
         get() {
             val manager = activity.packageManager
-            val componentName = name.toComponentName()
-            val state = manager.getComponentEnabledSetting(componentName)
+            val component = ComponentName(activity, name)
+            val state = manager.getComponentEnabledSetting(component)
             return if (state == COMPONENT_ENABLED_STATE_DEFAULT) {
                 isEnabledInManifest
             } else {
@@ -122,7 +121,7 @@ internal class IconChangeManager(private val activity: Activity) {
         }
         set(enabled) {
             val manager = activity.packageManager
-            val componentName = name.toComponentName()
+            val component = ComponentName(activity, name)
             val state = if (this == initialAlias) {
                 if (enabled) COMPONENT_ENABLED_STATE_DEFAULT
                 else COMPONENT_ENABLED_STATE_DISABLED
@@ -130,26 +129,17 @@ internal class IconChangeManager(private val activity: Activity) {
                 if (enabled) COMPONENT_ENABLED_STATE_ENABLED
                 else COMPONENT_ENABLED_STATE_DEFAULT
             }
-            manager.setComponentEnabledSetting(
-                componentName,
-                state,
-                DONT_KILL_APP
-            )
+            manager.setComponentEnabledSetting(component, state, DONT_KILL_APP)
         }
-
-    private fun String.toComponentName() = ComponentName(activity, this)
 }
 
-private const val EXTRA_IS_CHANGING_ACTIVATION: String =
-    BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ACTIVATION"
-
-private const val EXTRA_IS_CHANGING_ICON: String =
-    BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ICON"
-
-private fun Activity.getManifestInfo(): PackageInfo {
+private fun Activity.getActivitiesFromManifest(): Array<out ActivityInfo> {
     val flags = GET_ACTIVITIES or GET_META_DATA or MATCH_DISABLED_COMPONENTS
-    return packageManager.getPackageInfo(packageName, flags)
+    return packageManager.getPackageInfo(packageName, flags).activities!!
 }
+
+private val ActivityInfo.isIconChangeAlias: Boolean
+    get() = metaData?.containsKey(ActivityAlias.META_DATA_TITLE) == true
 
 private fun Activity.restart() {
     finish() // <- Must come first, else it cancels the startActivity().
@@ -157,5 +147,8 @@ private fun Activity.restart() {
     startActivity(intent.putExtra(EXTRA_IS_CHANGING_ACTIVATION, true))
 }
 
-private val ActivityInfo.isIconChangeAlias: Boolean
-    get() = metaData?.containsKey(ActivityAlias.META_DATA_TITLE) == true
+private const val EXTRA_IS_CHANGING_ACTIVATION: String =
+    BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ACTIVATION"
+
+private const val EXTRA_IS_CHANGING_ICON: String =
+    BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ICON"

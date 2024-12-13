@@ -50,14 +50,23 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // IconChangeManager's current internal implementation assumes that a
+        // new one is created for each Activity instance, and that there's only
+        // ever one of each running at a time. If you intend to cache it in a
+        // ViewModel or an Application or the like, you'll need to refactor the
+        // Activity parameter and start mode handling, at least.
         val manager = IconChangeManager(this).also { iconChangeManager = it }
         val startMode = manager.determineStartMode(intent, savedInstanceState)
 
+        // Nothing here changes without the Activity recreating or restarting,
+        // so the IconChangeManager is just passed in directly for the demo.
         setContent { Content(manager, startMode) }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+
+        // This is necessary only if you're using determineStartMode().
         iconChangeManager.onSaveInstanceState(outState)
     }
 }
@@ -96,7 +105,7 @@ private fun Content(
 @Composable
 private fun MainContent(
     manager: IconChangeManager,
-    modifier: Modifier = Modifier
+    modifier: Modifier
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -106,6 +115,7 @@ private fun MainContent(
         HorizontalDivider()
 
         val isActivated = manager.isIconChangeActivated
+
         OutlinedButton({ manager.isIconChangeActivated = !isActivated }) {
             Text(if (isActivated) "Deactivate" else "Activate")
         }
@@ -117,7 +127,7 @@ private fun MainContent(
         }
         Text(text = header, textAlign = TextAlign.Center)
 
-        if (!manager.isIconChangeActivated) return
+        if (!isActivated) return
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),

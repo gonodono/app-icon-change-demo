@@ -150,10 +150,13 @@ determining if the `Activity` is restarting due to an activation or icon change.
 
   - The launcher app, Settings pages, etc., may not work well with this,
     possibly taking a while to update, or requiring a device restart, or
-    breaking in unforeseen ways.
+    simply breaking somehow.
 
-  - It might not work at all in certain devices or environments.
+  - It might be possible for the user to get the app into an unlaunchable state,
+    requiring some fiddling with adb, or uninstalling/reinstalling.
 
+  - It may not work at all in certain devices or environments.
+ 
 - This was originally written in Java. If you would prefer that version, [the
   commit starting with `bdfbdea`][commit] is the last one in that language.
 
