@@ -5,7 +5,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -16,8 +15,6 @@ import android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS
 import android.os.Bundle
 
 internal class IconChangeManager(private val activity: Activity) {
-
-    private val packageManager: PackageManager = activity.packageManager
 
     private val currentInit: ActivityAlias
     private val initialAlias: ActivityAlias
@@ -85,16 +82,13 @@ internal class IconChangeManager(private val activity: Activity) {
                 // issues, you might need to change back to a manual relaunch.
                 activity.restart()
             } else {
-                arrayOf(initialAlias, currentAlias).forEach { alias ->
-                    packageManager.setComponentEnabledSetting(
-                        alias.name.toComponentName(),
-                        COMPONENT_ENABLED_STATE_DEFAULT,
-                        DONT_KILL_APP
-                    )
-                }
+                initialAlias.isComponentEnabled = true
+                currentAlias.isComponentEnabled = false
 
-                // Activity#recreate() seems to suffice here as well,
-                // but the demo does a restart to keep things symmetric.
+                // Activity#recreate() seems to suffice here as well, since the
+                // aliases are being reset to their default values, but the demo
+                // does a restart to keep things symmetrical. You can pull this
+                // out of the if-else, obviously, if you keep the restarts.
                 activity.restart()
             }
         }
@@ -117,8 +111,9 @@ internal class IconChangeManager(private val activity: Activity) {
 
     private var ActivityAlias.isComponentEnabled: Boolean
         get() {
+            val manager = activity.packageManager
             val componentName = name.toComponentName()
-            val state = packageManager.getComponentEnabledSetting(componentName)
+            val state = manager.getComponentEnabledSetting(componentName)
             return if (state == COMPONENT_ENABLED_STATE_DEFAULT) {
                 isEnabledInManifest
             } else {
@@ -126,14 +121,18 @@ internal class IconChangeManager(private val activity: Activity) {
             }
         }
         set(enabled) {
-            val newState = when {
-                enabled -> COMPONENT_ENABLED_STATE_ENABLED
-                this == initialAlias -> COMPONENT_ENABLED_STATE_DISABLED
-                else -> COMPONENT_ENABLED_STATE_DEFAULT
+            val manager = activity.packageManager
+            val componentName = name.toComponentName()
+            val state = if (this == initialAlias) {
+                if (enabled) COMPONENT_ENABLED_STATE_DEFAULT
+                else COMPONENT_ENABLED_STATE_DISABLED
+            } else {
+                if (enabled) COMPONENT_ENABLED_STATE_ENABLED
+                else COMPONENT_ENABLED_STATE_DEFAULT
             }
-            packageManager.setComponentEnabledSetting(
-                name.toComponentName(),
-                newState,
+            manager.setComponentEnabledSetting(
+                componentName,
+                state,
                 DONT_KILL_APP
             )
         }
