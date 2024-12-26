@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">App Icon Change Demo</string>
+
     <string name="initial_alias">Original</string>
     <string name="clone_initial_alias">Original</string>
+
     <string name="red_alias">Really Red</string>
     <string name="green_alias">Greatly Green</string>
     <string name="blue_alias">Bigly Blue</string>
+
 </resources>

@@ -2,6 +2,7 @@ package com.gonodono.appiconchangedemo
 
 import android.app.Activity
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
@@ -64,7 +65,7 @@ internal class IconChangeManager(private val activity: Activity) {
     private var isChangingIcon = false
 
     fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(EXTRA_IS_CHANGING_ICON, isChangingIcon)
+        if (isChangingIcon) outState.putBoolean(EXTRA_IS_CHANGING_ICON, true)
     }
 
     var isIconChangeActivated: Boolean = !initialAlias.isComponentEnabled
@@ -133,7 +134,7 @@ internal class IconChangeManager(private val activity: Activity) {
         }
 }
 
-private fun Activity.getActivitiesFromManifest(): Array<out ActivityInfo> {
+private fun Context.getActivitiesFromManifest(): Array<out ActivityInfo> {
     val flags = GET_ACTIVITIES or GET_META_DATA or MATCH_DISABLED_COMPONENTS
     return packageManager.getPackageInfo(packageName, flags).activities!!
 }
@@ -148,7 +149,7 @@ private fun Activity.restart() {
 }
 
 private const val EXTRA_IS_CHANGING_ACTIVATION: String =
-    BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ACTIVATION"
+    "${BuildConfig.APPLICATION_ID}.extra.IS_CHANGING_ACTIVATION"
 
 private const val EXTRA_IS_CHANGING_ICON: String =
-    BuildConfig.APPLICATION_ID + ".extra.IS_CHANGING_ICON"
+    "${BuildConfig.APPLICATION_ID}.extra.IS_CHANGING_ICON"
