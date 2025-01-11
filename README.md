@@ -164,7 +164,7 @@ determining if the `Activity` is restarting due to an activation or icon change.
 
 MIT License
 
-Copyright (c) 2024 Mike M.
+Copyright (c) 2025 Mike M.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

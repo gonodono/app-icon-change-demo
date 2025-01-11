@@ -4,15 +4,15 @@ import android.content.pm.ActivityInfo
 
 internal data class ActivityAlias(private val activityInfo: ActivityInfo) {
 
-    val isEnabledInManifest: Boolean = activityInfo.enabled
+    val isEnabledInManifest: Boolean get() = activityInfo.enabled
 
-    val icon: Int = activityInfo.icon
+    val icon: Int get() = activityInfo.icon
 
-    val name: String = activityInfo.name
+    val name: String get() = activityInfo.name
 
-    val simpleName: String = name.substringAfterLast('.')
+    val simpleName: String get() = name.substringAfterLast('.')
 
-    val title: String = activityInfo.metaData.getString(META_DATA_TITLE)!!
+    val title: String get() = activityInfo.metaData.getString(META_DATA_TITLE)!!
 
     companion object {
 
